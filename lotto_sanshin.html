@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>산신할배 로또 번호 추천기</title>
+<meta name="description" content="산신할배께서 내려주시는 로또 번호 추천! 역대 당첨번호 통계 기반 번호 추천 서비스">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@700&family=Noto+Sans+KR:wght@400;500&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  background: #080603;
+  color: #e8d5a0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+header {
+  width: 100%;
+  background: rgba(0,0,0,0.6);
+  border-bottom: 1px solid rgba(200,150,50,0.2);
+  padding: 0.75rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 20px;
+  color: #e8b84b;
+  letter-spacing: 3px;
+}
+
+.ad-top {
+  width: 100%;
+  background: rgba(20,15,5,0.8);
+  border-bottom: 1px solid rgba(200,150,50,0.15);
+  padding: 0.75rem;
+  text-align: center;
+  font-size: 12px;
+  color: rgba(200,150,50,0.4);
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.main {
+  width: 100%;
+  max-width: 600px;
+  padding: 2rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.shrine-card {
+  background: #0d0a05;
+  border: 1px solid rgba(200,150,50,0.35);
+  border-radius: 16px;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.shrine-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(200,120,20,0.18) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+.incense { font-size: 22px; letter-spacing: 10px; margin-bottom: 0.5rem; opacity: 0.8; }
+
+.shrine-title {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 26px;
+  font-weight: 700;
+  color: #e8b84b;
+  letter-spacing: 5px;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.shrine-sub {
+  font-size: 12px;
+  color: rgba(200,150,50,0.55);
+  letter-spacing: 2px;
+  margin-bottom: 1.5rem;
+}
+
+.mode-btns {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+}
+
+.mode-btn {
+  background: rgba(200,150,50,0.08);
+  border: 1px solid rgba(200,150,50,0.25);
+  border-radius: 20px;
+  padding: 6px 16px;
+  font-size: 13px;
+  color: #c8a060;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+
+.mode-btn:hover, .mode-btn.active {
+  background: rgba(200,150,50,0.22);
+  border-color: #e8b84b;
+  color: #e8b84b;
+}
+
+.oracle-btn {
+  background: linear-gradient(135deg, #9a6f0a, #e8b84b, #9a6f0a);
+  border: none;
+  border-radius: 10px;
+  padding: 16px 36px;
+  font-family: 'Noto Serif KR', serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: #0d0a05;
+  cursor: pointer;
+  letter-spacing: 2px;
+  margin-bottom: 1.5rem;
+  transition: transform 0.1s, box-shadow 0.15s;
+  box-shadow: 0 0 24px rgba(232,184,75,0.35);
+  width: 100%;
+  max-width: 320px;
+}
+
+.oracle-btn:hover { transform: scale(1.02); box-shadow: 0 0 36px rgba(232,184,75,0.55); }
+.oracle-btn:active { transform: scale(0.97); }
+.oracle-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+.msg-area {
+  min-height: 30px;
+  font-family: 'Noto Serif KR', serif;
+  font-size: 14px;
+  color: #c8a060;
+  margin-bottom: 1.25rem;
+  letter-spacing: 1px;
+  line-height: 1.6;
+}
+
+.balls-stage {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  min-height: 76px;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.lball {
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+  opacity: 0;
+  transform: scale(0) rotate(-180deg);
+  transition: transform 0.5s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s;
+  border: 2px solid rgba(255,255,255,0.25);
+  text-shadow: 0 1px 4px rgba(0,0,0,0.6);
+}
+
+.lball.shown { opacity: 1; transform: scale(1) rotate(0deg); }
+
+.lball.rolling {
+  opacity: 0.65;
+  animation: roll 0.14s linear infinite;
+}
+
+@keyframes roll {
+  0% { transform: scale(1.1) rotate(0deg); }
+  50% { transform: scale(0.92) rotate(180deg); }
+  100% { transform: scale(1.1) rotate(360deg); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(232,184,75,0.5); }
+  50% { box-shadow: 0 0 28px rgba(232,184,75,0.95), 0 0 50px rgba(232,184,75,0.3); }
+}
+
+.lball.final { animation: glow-pulse 1.8s ease-in-out infinite; }
+
+.ad-mid {
+  background: rgba(15,12,5,0.8);
+  border: 1px dashed rgba(200,150,50,0.2);
+  border-radius: 10px;
+  padding: 1rem;
+  text-align: center;
+  font-size: 12px;
+  color: rgba(200,150,50,0.35);
+  min-height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.freq-card {
+  background: #0d0a05;
+  border: 1px solid rgba(200,150,50,0.25);
+  border-radius: 14px;
+  padding: 1.5rem;
+}
+
+.freq-card-title {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 14px;
+  color: rgba(200,150,50,0.7);
+  letter-spacing: 2px;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.freq-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(42px, 1fr));
+  gap: 5px;
+}
+
+.freq-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.freq-bar-wrap {
+  width: 28px;
+  display: flex;
+  align-items: flex-end;
+  height: 50px;
+}
+
+.freq-bar {
+  width: 100%;
+  border-radius: 3px;
+  opacity: 0.75;
+  transition: opacity 0.2s;
+}
+
+.freq-bar:hover { opacity: 1; }
+.freq-num { font-size: 11px; font-weight: 500; color: #a08050; }
+.freq-cnt { font-size: 10px; color: #705030; }
+
+.history-card {
+  background: #0d0a05;
+  border: 1px solid rgba(200,150,50,0.25);
+  border-radius: 14px;
+  padding: 1.5rem;
+}
+
+.history-title {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 14px;
+  color: rgba(200,150,50,0.7);
+  letter-spacing: 2px;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.history-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(200,150,50,0.1);
+  flex-wrap: wrap;
+}
+
+.history-item:last-child { border-bottom: none; }
+
+.hist-round {
+  font-size: 12px;
+  color: rgba(200,150,50,0.5);
+  min-width: 50px;
+  font-family: 'Noto Serif KR', serif;
+}
+
+.sball {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+.bonus-divider {
+  width: 1px;
+  height: 20px;
+  background: rgba(200,150,50,0.2);
+}
+
+.bonus-label { font-size: 10px; color: rgba(200,150,50,0.4); }
+
+.disclaimer {
+  font-size: 11px;
+  color: rgba(200,150,50,0.3);
+  text-align: center;
+  padding: 1rem;
+  line-height: 1.6;
+}
+
+footer {
+  width: 100%;
+  background: rgba(0,0,0,0.5);
+  border-top: 1px solid rgba(200,150,50,0.15);
+  padding: 1rem;
+  text-align: center;
+  font-size: 11px;
+  color: rgba(200,150,50,0.3);
+  letter-spacing: 1px;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">⛩ 산신할배 로또</div>
+  <div style="font-size:12px;color:rgba(200,150,50,0.4);">역대 당첨번호 통계 분석</div>
+</header>
+
+<div class="ad-top">
+  <!-- Google AdSense 상단 배너 광고 (728x90) -->
+  <!-- <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXXXXX" data-ad-slot="XXXXXXXX" data-ad-format="auto" data-full-width-responsive="true"></ins> -->
+  광고 영역 (728x90)
+</div>
+
+<div class="main">
+
+  <div class="shrine-card">
+    <div class="incense">🪔 🏔 🪔</div>
+    <span class="shrine-title">산신할배 로또</span>
+    <div class="shrine-sub">천지신명께 번호를 여쭈옵니다</div>
+
+    <div class="mode-btns">
+      <button class="mode-btn active" onclick="setMode('hot',this)">🔥 열기</button>
+      <button class="mode-btn" onclick="setMode('cold',this)">❄️ 냉기</button>
+      <button class="mode-btn" onclick="setMode('mixed',this)">⚖️ 조화</button>
+      <button class="mode-btn" onclick="setMode('random',this)">🎲 천명</button>
+    </div>
+
+    <button class="oracle-btn" id="oracle-btn" onclick="startRitual()">
+      ⛩ 번호를 내려주소서 ⛩
+    </button>
+
+    <div class="msg-area" id="msg-area">산신할배께 고하면 번호를 내려주십니다</div>
+
+    <div class="balls-stage" id="balls-stage">
+      <div style="color:rgba(200,150,50,0.25);font-size:13px;letter-spacing:4px;">✦ ✦ ✦ ✦ ✦ ✦</div>
+    </div>
+  </div>
+
+  <div class="ad-mid">
+    <!-- Google AdSense 중간 광고 (336x280) -->
+    <!-- <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXXXXX" data-ad-slot="XXXXXXXX" data-ad-format="auto"></ins> -->
+    광고 영역 (336x280)
+  </div>
+
+  <div class="freq-card">
+    <div class="freq-card-title">▲ 번호별 출현 빈도 ▲</div>
+    <div class="freq-grid" id="freq-grid">
+      <div style="grid-column:1/-1;text-align:center;font-size:13px;color:rgba(200,150,50,0.4);padding:1rem;">데이터 불러오는 중...</div>
+    </div>
+  </div>
+
+  <div class="history-card">
+    <div class="history-title">▲ 최근 당첨번호 ▲</div>
+    <div id="history-list">
+      <div style="text-align:center;font-size:13px;color:rgba(200,150,50,0.4);padding:1rem;">데이터 불러오는 중...</div>
+    </div>
+  </div>
+
+  <div class="ad-mid">
+    <!-- Google AdSense 하단 광고 (336x280) -->
+    광고 영역 (336x280)
+  </div>
+
+  <div class="disclaimer">
+    ※ 본 서비스는 통계 정보를 제공할 뿐이며 당첨을 보장하지 않습니다.<br>
+    로또는 완전 무작위 추첨이며 과거 통계가 미래 결과에 영향을 주지 않습니다.<br>
+    책임감 있는 복권 구매를 권장합니다.
+  </div>
+
+</div>
+
+<footer>⛩ 산신할배 로또 © 2026 ⛩</footer>
+
+<script>
+let freqData = {};
+let currentMode = 'hot';
+let isRunning = false;
+
+const msgs = {
+  hot: ['뜨거운 기운이 모이도다...','화기(火氣)가 충만하니...','열기 속에서 번호가 나타나도다!'],
+  cold: ['차가운 산바람이 불어오니...','음기(陰氣)가 깊으니...','냉기 속에서 번호가 현신하도다!'],
+  mixed: ['음양이 조화를 이루니...','하늘과 땅이 균형을 찾으니...','조화로운 번호가 강림하도다!'],
+  random: ['천명을 여쭈나이다...','산신령님 굽어살피소서...','하늘의 뜻이 번호로 나타나도다!'],
+};
+
+function getBallColor(n) {
+  if (n <= 10) return '#d4870a';
+  if (n <= 20) return '#1565c0';
+  if (n <= 30) return '#b71c1c';
+  if (n <= 40) return '#4a4a4a';
+  return '#1b5e20';
+}
+
+function setMode(m, el) {
+  currentMode = m;
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+async function loadFreq() {
+  try {
+    const r = await fetch('https://www.dhlottery.co.kr/common.do?method=getLottoNumber&drwNo=1180');
+    const j = await r.json();
+    const latest = j.drwNo || 1100;
+    const freq = {};
+    for (let i = 1; i <= 45; i++) freq[i] = 0;
+    const ps = [];
+    const recent = [];
+    for (let n = Math.max(1, latest - 150); n <= latest; n++) {
+      ps.push(fetch(`https://www.dhlottery.co.kr/common.do?method=getLottoNumber&drwNo=${n}`).then(r=>r.json()).catch(()=>null));
+    }
+    const res = await Promise.all(ps);
+    res.forEach(d => {
+      if (!d || d.returnValue !== 'success') return;
+      const nums = [d.drwtNo1,d.drwtNo2,d.drwtNo3,d.drwtNo4,d.drwtNo5,d.drwtNo6];
+      nums.forEach(n => { if(n) freq[n]++; });
+      if (recent.length < 5) recent.push({round: d.drwNo, nums, bonus: d.bnusNo});
+    });
+    freqData = freq;
+    renderFreqGrid(freq);
+    renderHistory(recent.reverse());
+  } catch(e) {
+    for (let i = 1; i <= 45; i++) freqData[i] = Math.floor(Math.random()*60)+10;
+    renderFreqGrid(freqData);
+    document.getElementById('history-list').innerHTML = '<div style="text-align:center;font-size:13px;color:rgba(200,150,50,0.4);padding:1rem;">데이터를 불러올 수 없습니다</div>';
+  }
+}
+
+function renderFreqGrid(freq) {
+  const max = Math.max(...Object.values(freq));
+  const el = document.getElementById('freq-grid');
+  el.innerHTML = '';
+  for (let i = 1; i <= 45; i++) {
+    const cnt = freq[i] || 0;
+    const h = Math.max(4, Math.round((cnt / max) * 50));
+    const color = getBallColor(i);
+    el.innerHTML += `<div class="freq-item">
+      <div class="freq-cnt">${cnt}</div>
+      <div class="freq-bar-wrap"><div class="freq-bar" style="height:${h}px;background:${color};"></div></div>
+      <div class="freq-num">${i}</div>
+    </div>`;
+  }
+}
+
+function renderHistory(list) {
+  const el = document.getElementById('history-list');
+  if (!list.length) { el.innerHTML = '<div style="text-align:center;padding:1rem;color:rgba(200,150,50,0.4);">데이터 없음</div>'; return; }
+  el.innerHTML = list.map(d =>
+    `<div class="history-item">
+      <div class="hist-round">${d.round}회</div>
+      ${d.nums.map(n => `<div class="sball" style="background:${getBallColor(n)}">${n}</div>`).join('')}
+      <div class="bonus-divider"></div>
+      <div class="sball" style="background:#555">${d.bonus}</div>
+      <div class="bonus-label">보너스</div>
+    </div>`
+  ).join('');
+}
+
+function pickNumbers(mode) {
+  const sorted = Object.entries(freqData).sort((a,b)=>b[1]-a[1]);
+  let pool;
+  if (mode === 'hot') pool = sorted.slice(0,20).map(x=>+x[0]);
+  else if (mode === 'cold') pool = sorted.slice(25).map(x=>+x[0]);
+  else if (mode === 'mixed') pool = [...sorted.slice(0,10),...sorted.slice(30)].map(x=>+x[0]);
+  else pool = Array.from({length:45},(_,i)=>i+1);
+  const picked = [], used = new Set();
+  let t = 0;
+  while (picked.length < 6 && t++ < 999) {
+    const n = pool[Math.floor(Math.random()*pool.length)];
+    if (!used.has(n)) { used.add(n); picked.push(n); }
+  }
+  return picked.sort((a,b)=>a-b);
+}
+
+async function startRitual() {
+  if (isRunning) return;
+  isRunning = true;
+  const btn = document.getElementById('oracle-btn');
+  const msgEl = document.getElementById('msg-area');
+  const stage = document.getElementById('balls-stage');
+  btn.disabled = true;
+  stage.innerHTML = '';
+
+  for (const msg of msgs[currentMode]) {
+    msgEl.textContent = msg;
+    await sleep(700);
+  }
+
+  if (!Object.keys(freqData).length) {
+    msgEl.textContent = '산신할배 강림 준비중...';
+    await loadFreq();
+  }
+
+  const numbers = pickNumbers(currentMode);
+  msgEl.textContent = '번호가 강림하도다...';
+
+  for (let i = 0; i < 6; i++) {
+    const ball = document.createElement('div');
+    ball.className = 'lball rolling';
+    ball.style.background = getBallColor(numbers[i]);
+    ball.textContent = '?';
+    stage.appendChild(ball);
+    await sleep(100);
+    ball.style.opacity = '0.6';
+  }
+
+  await sleep(900);
+
+  const balls = stage.querySelectorAll('.lball');
+  for (let i = 0; i < 6; i++) {
+    balls[i].classList.remove('rolling');
+    balls[i].textContent = numbers[i];
+    balls[i].classList.add('shown');
+    await sleep(320);
+  }
+
+  await sleep(400);
+  balls.forEach(b => b.classList.add('final'));
+  msgEl.textContent = '✦ 산신할배께서 번호를 내려주셨습니다 ✦';
+  btn.disabled = false;
+  btn.textContent = '⛩ 다시 여쭈옵니다 ⛩';
+  isRunning = false;
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+loadFreq();
+</script>
+</body>
+</html>
